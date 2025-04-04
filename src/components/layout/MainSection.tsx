@@ -1,5 +1,4 @@
 import { DatePickerWithRange } from "../custom/DatePicker";
-import CustomLineChart from "../custom/LineChart";
 import CityStats from "../custom/PieChart";
 import SkuTable from "../custom/SKUDataTable";
 import TabSelect from "../custom/TabSelect";
@@ -76,10 +75,8 @@ const SelectionSection: React.FC<SelectionSectionProps> = ({
 const AnalyticsSection = () => {
   return (
     <div className="flex w-full gap-2 mb-8">
-      {/* <CustomLineChart title={"Sales (MRP)"} /> */}
       <SalesLineChart title={"Sales (MRP)"} />
       <QuantityLineChart title={"Total Quantity Sold"} />
-      {/* <CustomLineChart title={"Total Quantity Sold"} /> */}
       <CityStats />
     </div>
   );

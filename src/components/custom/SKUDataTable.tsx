@@ -47,7 +47,7 @@ interface RawSKUItem {
 
 const SKUTable: React.FC = () => {
   const [data, setData] = useState<SKUData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const buildQuery = () => {
     const config = refConfig.cards.find(
@@ -189,55 +189,67 @@ const SKUTable: React.FC = () => {
             </TableRow>
           </TableHeader>
 
-          <TableBody>
-            {data.map((item, idx) => (
-              <TableRow key={idx}>
-                <TableCell className="border-r border-[#F1F1F1]">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      defaultChecked
-                      className="data-[state=checked]:bg-[#027056] data-[state=checked]:border-[#027056]"
-                    />
-                    {item.name}
-                  </div>
+          {!loading ? (
+            <TableBody>
+              {data.map((item, idx) => (
+                <TableRow key={idx}>
+                  <TableCell className="border-r border-[#F1F1F1]">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        defaultChecked
+                        className="data-[state=checked]:bg-[#027056] data-[state=checked]:border-[#027056]"
+                      />
+                      {item.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {item.sales}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {item.outOfStock}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium border-r border-[#F1F1F1]">
+                    {item.totalInventory}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {item.averageRank.toFixed(1)}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {item.estTraffic}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {item.estImpressions}
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              <TableRow className="bg-[#FFFFFF] font-semibold">
+                <TableCell>Total</TableCell>
+                <TableCell className="text-center">₹{totalSales}</TableCell>
+                <TableCell className="text-center">
+                  {totalOutOfStock.toFixed(2)}%
                 </TableCell>
-                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                  {item.sales}
+                <TableCell className="text-center border-r border-[#F1F1F1]">
+                  {totalInventory}
                 </TableCell>
-                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                  {item.outOfStock}
+                <TableCell className="text-center">
+                  {(totalAverageRank / data.length).toFixed(1)}
                 </TableCell>
-                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium border-r border-[#F1F1F1]">
-                  {item.totalInventory}
-                </TableCell>
-                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                  {item.averageRank.toFixed(1)}
-                </TableCell>
-                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                  {item.estTraffic}
-                </TableCell>
-                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                  {item.estImpressions}
+                <TableCell className="text-center">{totalTraffic}</TableCell>
+                <TableCell className="text-center">
+                  {totalImpressions}
                 </TableCell>
               </TableRow>
-            ))}
-
-            <TableRow className="bg-[#FFFFFF] font-semibold">
-              <TableCell>Total</TableCell>
-              <TableCell className="text-center">₹{totalSales}</TableCell>
-              <TableCell className="text-center">
-                {totalOutOfStock.toFixed(2)}%
-              </TableCell>
-              <TableCell className="text-center border-r border-[#F1F1F1]">
-                {totalInventory}
-              </TableCell>
-              <TableCell className="text-center">
-                {(totalAverageRank / data.length).toFixed(1)}
-              </TableCell>
-              <TableCell className="text-center">{totalTraffic}</TableCell>
-              <TableCell className="text-center">{totalImpressions}</TableCell>
-            </TableRow>
-          </TableBody>
+            </TableBody>
+          ) : (
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-4">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          )}
         </Table>
       </div>
     </div>

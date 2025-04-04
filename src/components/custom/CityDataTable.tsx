@@ -34,7 +34,7 @@ interface Totals {
 
 const CityTable = () => {
   const [cityRows, setCityRows] = useState<CityRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [totals, setTotals] = useState<Totals>({
     overallSales: "",
     overallPercentage: "",
@@ -184,43 +184,52 @@ const CityTable = () => {
                 </TableHead>
               </TableRow>
             </TableHeader>
-
-            <TableBody>
-              {cityRows.slice(0, 4).map((city) => (
-                <TableRow key={city.id}>
-                  <TableCell className="border-r border-[#F1F1F1]">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        defaultChecked
-                        className="data-[state=checked]:bg-[#027056] data-[state=checked]:border-[#027056]"
-                      />
-                      {city.name}
-                    </div>
+            {!loading ? (
+              <TableBody>
+                {cityRows.slice(0, 4).map((city) => (
+                  <TableRow key={city.id}>
+                    <TableCell className="border-r border-[#F1F1F1]">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          defaultChecked
+                          className="data-[state=checked]:bg-[#027056] data-[state=checked]:border-[#027056]"
+                        />
+                        {city.name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                      {city.sales}
+                    </TableCell>
+                    <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                      {city.percentShare}
+                    </TableCell>
+                    <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                      {city.monthOverMonthChange}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow className="font-semibold bg-[#FFFFFF">
+                  <TableCell>Total</TableCell>
+                  <TableCell className="text-center">
+                    {totals.overallSales}
                   </TableCell>
-                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                    {city.sales}
+                  <TableCell className="text-center">
+                    {totals.overallPercentage}
                   </TableCell>
-                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                    {city.percentShare}
-                  </TableCell>
-                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
-                    {city.monthOverMonthChange}
+                  <TableCell className="text-center">
+                    {totals.overallChange}
                   </TableCell>
                 </TableRow>
-              ))}
-              <TableRow className="font-semibold bg-[#FFFFFF">
-                <TableCell>Total</TableCell>
-                <TableCell className="text-center">
-                  {totals.overallSales}
-                </TableCell>
-                <TableCell className="text-center">
-                  {totals.overallPercentage}
-                </TableCell>
-                <TableCell className="text-center">
-                  {totals.overallChange}
-                </TableCell>
-              </TableRow>
-            </TableBody>
+              </TableBody>
+            ) : (
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            )}
           </Table>
         </div>
       </div>
