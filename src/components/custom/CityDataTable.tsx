@@ -56,7 +56,7 @@ const totals = {
 
 const CityTable: React.FC = () => {
   return (
-    <div className="">
+    <div className="mt-[40px]">
       {/* Header Section */}
       <div className="flex items-center justify-between mb-4">
         <div>

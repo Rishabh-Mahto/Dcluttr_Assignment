@@ -84,7 +84,7 @@ const AnalyticsSection = () => {
 export default function MainSection() {
   const [showGraph, setShowGraph] = useState<boolean>(true);
   return (
-    <div className="m-5 border-1 border-[#EBEBEB] rounded-[10px] w-full">
+    <div className="mx-5 mt-5 border-1 border-[#EBEBEB] rounded-[10px] w-full overflow-y-auto">
       <SelectionSection setShowGraph={setShowGraph} showGraph={showGraph} />
       <div className="w-full bg-[#FAFAFA] p-5">
         {showGraph && <AnalyticsSection />}

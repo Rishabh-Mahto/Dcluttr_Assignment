@@ -22,7 +22,7 @@ export function Sidebar() {
   );
 
   return (
-    <div className=" flex flex-col justify-between space-y-1 bg-[#F8F8F8] h-screen px-4 py-6 rounded-lg ">
+    <div className=" flex flex-col justify-between space-y-1 bg-[#F8F8F8] h-full px-4 py-6 rounded-lg ">
       <div>
         {" "}
         <a

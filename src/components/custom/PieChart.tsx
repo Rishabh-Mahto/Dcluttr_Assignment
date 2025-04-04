@@ -101,7 +101,7 @@ const CitiesChart: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg border border-[#F1F1F1] min-w-[350px] h-[292px]">
+    <div className="flex-1 bg-white rounded-lg border border-[#F1F1F1] min-w-[350px] h-[292px]">
       {/* Header */}
       <div className="flex p-3 border-b border-[#F1F1F1] items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-700">Top Cities</h2>

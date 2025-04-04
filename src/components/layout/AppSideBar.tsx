@@ -64,7 +64,7 @@ function AppSideBar() {
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   return (
-    <div className="max-w-[288px] h-[831px] bg-[#FFFFFF]">
+    <div className="max-w-[288px] h-full bg-[#FFFFFF]">
       <div className="flex w-full">
         <div className="w-[51px]">
           {" "}

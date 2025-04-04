@@ -22,7 +22,7 @@ const data = [
 
 export default function CustomLineChart({ title }: { title: string }) {
   return (
-    <div className="h-[292px] bg-[#FFFFFF] min-w-[349px] border-1 border-[#F1F1F1] rounded-[12px]">
+    <div className="flex-1 h-[292px] bg-[#FFFFFF] min-w-[349px] border-1 border-[#F1F1F1] rounded-[12px]">
       <div className="flex justify-between items-center h-[44px] w-full p-3 border-b-1 border-[#F1F1F1]">
         <p className="text-sm text-[#031B15]">{title}</p>
         <CircleHelp className="w-4 h-4 text-[#031B15]" />
