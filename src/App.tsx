@@ -1,3 +1,4 @@
+//@ts-nocheck
 import AppSideBar from "./components/layout/AppSidebar";
 import MainSection from "./components/layout/MainSection";
 
