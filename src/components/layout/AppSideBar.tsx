@@ -19,7 +19,13 @@ export function BrandSelect() {
   );
 }
 
-const FixedSideBar = ({ isOpen, setIsOpen }) => {
+const FixedSideBar = ({
+  isOpen,
+  setIsOpen,
+}: {
+  isOpen: boolean;
+  setIsOpen: any;
+}) => {
   const [selectedImage, setSelectedImage] = useState(perforaImg);
   const companyImages = [perforaImg, mamaEarthImg, boatImg];
 
