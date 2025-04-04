@@ -7,18 +7,6 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { ChevronsLeft } from "lucide-react";
 
-export function BrandSelect() {
-  return (
-    <div className="flex border border-[#FDFDFD] justify-between p-1.5 h-[36px] w-[180px]">
-      <div className="flex items-center">
-        <img alt="bb" />
-        <p>Test_Brand</p>
-      </div>
-      <ChevronsUpDownIcon className="ml-2 h-4 w-4 text-gray-500" />
-    </div>
-  );
-}
-
 const FixedSideBar = ({
   isOpen,
   setIsOpen,
@@ -72,7 +60,7 @@ const FixedSideBar = ({
   );
 };
 
-export default function AppSideBar() {
+function AppSideBar() {
   const [isOpen, setIsOpen] = useState<boolean>(true);
 
   return (
@@ -111,3 +99,5 @@ export default function AppSideBar() {
     </div>
   );
 }
+
+export default AppSideBar;

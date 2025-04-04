@@ -1,5 +1,4 @@
-//@ts-nocheck
-import AppSideBar from "./components/layout/AppSidebar";
+import AppSideBar from "./components/layout/AppSideBar";
 import MainSection from "./components/layout/MainSection";
 
 function App() {
