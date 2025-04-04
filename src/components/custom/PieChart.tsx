@@ -41,7 +41,6 @@ const CitiesChart: React.FC = () => {
       const thisMonthData: ResponseData[] = response?.[0]?.data;
       const lastMonthData: ResponseData[] = response?.[1]?.data;
 
-      // Calculate total sales for this month and last month
       const totalSales = thisMonthData.reduce(
         (sum: number, item: ResponseData) =>
           sum + Number(item["blinkit_insights_city.sales_mrp_sum"]),
@@ -54,15 +53,12 @@ const CitiesChart: React.FC = () => {
         0
       );
 
-      // Calculate overall growth change in percentage
       const change =
         ((totalSales - lastMonthTotalSales) / lastMonthTotalSales) * 100;
 
-      // Format each city's data
       const formattedData: City[] = thisMonthData.map(
         (item: ResponseData, index: number) => {
           const sales = Number(item["blinkit_insights_city.sales_mrp_sum"]);
-          // Compute percentage as a number
           const percentageValue = Number(
             ((sales / totalSales) * 100).toFixed(1)
           );
@@ -101,7 +97,7 @@ const CitiesChart: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 bg-white rounded-lg border border-[#F1F1F1] min-w-[350px] h-[292px]">
+    <div className="flex-1 bg-white rounded-lg border border-[#F1F1F1] min-w-[350px] h-[292px] shadow-[0px_1px_0px_0px_rgba(0,0,0,0.12)]">
       {/* Header */}
       <div className="flex p-3 border-b border-[#F1F1F1] items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-700">Top Cities</h2>

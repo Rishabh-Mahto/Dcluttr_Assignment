@@ -9,80 +9,116 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ChartLine, ChevronDown } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { executeQuery } from "@/fetchUtil";
+import refConfig from "@/assets/req.json";
 
-interface SubRow {
+interface SKUData {
+  id: string;
   name: string;
   sales: string;
   outOfStock: string;
   totalInventory: string;
-  avgRank: number;
+  averageRank: number;
   estTraffic: number;
   estImpressions: number;
 }
 
-interface SkuData {
-  name: string;
-  sales: string;
-  outOfStock: string;
-  totalInventory: string;
-  avgRank: string;
-  estTraffic: string;
-  estImpressions: string;
-  subRows?: SubRow[];
+interface RawSKUItem {
+  "blinkit_insights_sku.id": string;
+  "blinkit_insights_sku.name": string;
+  "blinkit_insights_sku.sales_mrp_sum": string;
+  "blinkit_insights_sku.qty_sold": string;
+  "blinkit_insights_sku.drr_7": string;
+  "blinkit_insights_sku.drr_14": string;
+  "blinkit_insights_sku.drr_30": string;
+  "blinkit_insights_sku.sales_mrp_max": string;
+  "blinkit_insights_sku.month_to_date_sales": string;
+  "blinkit_insights_sku.be_inv_qty": string;
+  "blinkit_insights_sku.fe_inv_qty": string;
+  "blinkit_insights_sku.inv_qty": string;
+  "blinkit_insights_sku.days_of_inventory_14": string;
+  "blinkit_insights_sku.days_of_inventory_max": string;
+  "blinkit_scraping_stream.on_shelf_availability": string | null;
+  "blinkit_scraping_stream.rank_avg": string | null;
+  "blinkit_scraping_stream.selling_price_avg": string | null;
+  "blinkit_scraping_stream.discount_avg": string | null;
 }
 
-const skuData: SkuData[] = [
-  {
-    name: "Protein Bar 100g",
-    sales: "₹93,132.12",
-    outOfStock: "1.68%",
-    totalInventory: "931.9",
-    avgRank: "3.2",
-    estTraffic: "12,303",
-    estImpressions: "25,005",
-    subRows: [
-      {
-        name: "Choco Bar 100g",
-        sales: "₹8,526.32",
-        outOfStock: "6.79%",
-        totalInventory: "679",
-        avgRank: 7,
-        estTraffic: 3005,
-        estImpressions: 4231,
-      },
-      {
-        name: "",
-        sales: "₹7,012.72",
-        outOfStock: "3.28%",
-        totalInventory: "328",
-        avgRank: 4,
-        estTraffic: 2960,
-        estImpressions: 3657,
-      },
-    ],
-  },
-  {
-    name: "SKU 3",
-    sales: "₹9313",
-    outOfStock: "1.68%",
-    totalInventory: "931.9",
-    avgRank: "11",
-    estTraffic: "1931.9",
-    estImpressions: "931.9",
-  },
-  {
-    name: "SKU 4",
-    sales: "₹0",
-    outOfStock: "0%",
-    totalInventory: "0",
-    avgRank: "-",
-    estTraffic: "₹0",
-    estImpressions: "₹0",
-  },
-];
+const SKUTable: React.FC = () => {
+  const [data, setData] = useState<SKUData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-export default function SKUTable() {
+  const buildQuery = () => {
+    const config = refConfig.cards.find(
+      (c: any) => c.id === "blinkit-insights-sku"
+    );
+    return config?.query ? JSON.parse(config.query) : null;
+  };
+
+  const transformApiData = (rawData: RawSKUItem[]): SKUData[] => {
+    return rawData.map((item) => ({
+      id: item["blinkit_insights_sku.id"],
+      name: item["blinkit_insights_sku.name"],
+      sales: `₹${Number(
+        item["blinkit_insights_sku.sales_mrp_sum"]
+      ).toLocaleString()}`,
+      outOfStock: item["blinkit_scraping_stream.on_shelf_availability"]
+        ? `${(
+            100 - Number(item["blinkit_scraping_stream.on_shelf_availability"])
+          ).toFixed(2)}%`
+        : "N/A",
+      totalInventory: item["blinkit_insights_sku.inv_qty"],
+      averageRank: item["blinkit_scraping_stream.rank_avg"]
+        ? Number(item["blinkit_scraping_stream.rank_avg"])
+        : 0,
+      estTraffic: Number(item["blinkit_insights_sku.qty_sold"]),
+      estImpressions: Number(item["blinkit_insights_sku.month_to_date_sales"]),
+    }));
+  };
+
+  const getSKUData = async () => {
+    try {
+      setLoading(true);
+      const query = buildQuery();
+      if (!query) return console.error("Query not found in config");
+
+      const response = await executeQuery(query);
+      const transformed = transformApiData(response[0].data);
+      setData(transformed);
+    } catch (error) {
+      console.error("Failed to load SKU data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getSKUData();
+  }, []);
+
+  const totalSales = data.reduce(
+    (acc, item) => acc + Number(item.sales.replace(/[^0-9.-]+/g, "")),
+    0
+  );
+  const totalOutOfStock = data.reduce(
+    (acc, item) => acc + parseFloat(item.outOfStock.replace("%", "")) || 0,
+    0
+  );
+  const totalInventory = data.reduce(
+    (acc, item) => acc + Number(item.totalInventory || 0),
+    0
+  );
+  const totalAverageRank = data.reduce(
+    (acc, item) => acc + item.averageRank,
+    0
+  );
+  const totalTraffic = data.reduce((acc, item) => acc + item.estTraffic, 0);
+  const totalImpressions = data.reduce(
+    (acc, item) => acc + item.estImpressions,
+    0
+  );
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -90,174 +126,122 @@ export default function SKUTable() {
           <h2 className="text-[20px] leading-6 font-bold text-[#031B15]">
             SKU level data
           </h2>
-          <p className="text-sm font-normal leading-4.5 text-[#4F4D55]">
+          <p className="text-sm font-normal text-[#4F4D55]">
             Analytics for all your SKUs
           </p>
         </div>
         <Button
           variant="outline"
-          className="flex w-[109px] h-[40px] items-center gap-2 bg-[#027056] text-white rounded-[10px] text-sm font-medium"
+          className="flex w-[109px] h-[40px] items-center gap-2 bg-[#027056] text-white rounded-[10px] text-sm font-medium hover:bg-[#027056] hover:text-white"
         >
           Filters(1) <ChevronDown size={25} />
         </Button>
       </div>
-      <div className="bg-white rounded-lg border border-gray-200  w-full">
-        {/* Table with Divided Sections */}
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              {/* First header row for grouping */}
-              <TableRow>
-                {/* SKU Name spans two rows */}
-                <TableHead
-                  rowSpan={2}
-                  className="w-1/6 border-r border-[#F1F1F1]"
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    {" "}
-                    <ChartLine size={20} className="text-[#031B15]" />
-                    <p>SKU Name</p>
-                  </div>
-                </TableHead>
-                {/* Availability group */}
-                <TableHead
-                  colSpan={3}
-                  className="text-center text-[15px] font-bold border-r border-[#F1F1F1]"
-                >
-                  Availability
-                </TableHead>
-                {/* Visibility group */}
-                <TableHead
-                  colSpan={4}
-                  className="text-center text-[15px] font-bold"
-                >
-                  Visibility
-                </TableHead>
-              </TableRow>
-              {/* Second header row with sub-columns */}
-              <TableRow>
-                <TableHead>
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">Sales</p>
-                    <ChevronDown size={14} className="text-[#031B15]" />
-                  </div>
-                </TableHead>
-                <TableHead className="text-center">
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
-                      Out of Stock
-                    </p>
-                    <ChevronDown size={14} className="text-[#031B15]" />
-                  </div>
-                </TableHead>
-                <TableHead className="border-r border-[#F1F1F1]">
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
-                      Total Inventory
-                    </p>
-                    <ChevronDown size={14} className="text-[#031B15]" />
-                  </div>
-                </TableHead>
-                <TableHead>
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
-                      Avg. Rank
-                    </p>
-                    <ChevronDown size={14} className="text-[#031B15]" />
-                  </div>
-                </TableHead>
-                <TableHead>
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
-                      Est. Traffic
-                    </p>
-                    <ChevronDown size={14} className="text-[#031B15]" />
-                  </div>
-                </TableHead>
-                <TableHead>
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
-                      Est. Impressions
-                    </p>
-                    <ChevronDown size={14} className="text-[#031B15]" />
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
 
-            <TableBody>
-              {skuData.map((sku, index) => (
-                <React.Fragment key={index}>
-                  {/* Main Row */}
-                  <TableRow>
-                    <TableCell className=" border-r border-[#F1F1F1]">
-                      <div className="flex items-center gap-2">
-                        <Checkbox defaultChecked />
-                        {sku.name}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">{sku.sales}</TableCell>
-                    <TableCell className="text-center">
-                      {sku.outOfStock}
-                    </TableCell>
-                    <TableCell className="text-center border-r border-[#F1F1F1]">
-                      {sku.totalInventory}
-                    </TableCell>
-                    <TableCell className="text-center">{sku.avgRank}</TableCell>
-                    <TableCell className="text-center">
-                      {sku.estTraffic}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {sku.estImpressions}
-                    </TableCell>
-                  </TableRow>
-
-                  {/* Sub Rows if Available */}
-                  {sku.subRows &&
-                    sku.subRows.map((subRow, subIndex) => (
-                      <TableRow key={subIndex} className="bg-gray-50">
-                        <TableCell className="pl-8  border-r border-[#F1F1F1]">
-                          {subRow.name}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.sales}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.outOfStock}
-                        </TableCell>
-                        <TableCell className="text-center  border-r border-[#F1F1F1]">
-                          {subRow.totalInventory}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.avgRank}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.estTraffic}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.estImpressions}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </React.Fragment>
+      <div className="bg-white rounded-lg border border-gray-200 w-full overflow-x-auto shadow-[0px_1px_0px_0px_rgba(0,0,0,0.12)]">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead
+                rowSpan={2}
+                className="w-1/6 border-r border-[#F1F1F1]"
+              >
+                <div className="flex items-center justify-center gap-1">
+                  <ChartLine size={20} className="text-[#031B15]" />
+                  <p>SKU Name</p>
+                </div>
+              </TableHead>
+              <TableHead
+                colSpan={3}
+                className="text-center font-bold border-r border-[#F1F1F1]"
+              >
+                Availability
+              </TableHead>
+              <TableHead colSpan={4} className="text-center font-bold">
+                Visibility
+              </TableHead>
+            </TableRow>
+            <TableRow>
+              {[
+                "Sales",
+                "Out of Stock",
+                "Total Inventory",
+                "Avg. Rank",
+                "Est. Traffic",
+                "Est. Impressions",
+              ].map((label, i) => (
+                <TableHead
+                  key={i}
+                  className={`text-center${
+                    label === "Total Inventory"
+                      ? " border-r border-[#F1F1F1]"
+                      : ""
+                  }`}
+                >
+                  <div className="flex justify-center items-center gap-1">
+                    <p className="font-semibold text-[15px] text-[#013025]">
+                      {label}
+                    </p>
+                    <ChevronDown size={14} className="text-[#031B15]" />
+                  </div>
+                </TableHead>
               ))}
+            </TableRow>
+          </TableHeader>
 
-              {/* Total Row */}
-              <TableRow className="font-semibold bg-gray-100">
-                <TableCell>Total</TableCell>
-                <TableCell className="text-center">₹2,93,132.12</TableCell>
-                <TableCell className="text-center">16%</TableCell>
-                <TableCell className="text-center border-r border-[#F1F1F1]">
-                  2931
+          <TableBody>
+            {data.map((item, idx) => (
+              <TableRow key={idx}>
+                <TableCell className="border-r border-[#F1F1F1]">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      defaultChecked
+                      className="data-[state=checked]:bg-[#027056] data-[state=checked]:border-[#027056]"
+                    />
+                    {item.name}
+                  </div>
                 </TableCell>
-                <TableCell className="text-center">8.3</TableCell>
-                <TableCell className="text-center">61,985</TableCell>
-                <TableCell className="text-center">2,61,768</TableCell>
+                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                  {item.sales}
+                </TableCell>
+                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                  {item.outOfStock}
+                </TableCell>
+                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium border-r border-[#F1F1F1]">
+                  {item.totalInventory}
+                </TableCell>
+                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                  {item.averageRank.toFixed(1)}
+                </TableCell>
+                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                  {item.estTraffic}
+                </TableCell>
+                <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                  {item.estImpressions}
+                </TableCell>
               </TableRow>
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+
+            <TableRow className="bg-[#FFFFFF] font-semibold">
+              <TableCell>Total</TableCell>
+              <TableCell className="text-center">₹{totalSales}</TableCell>
+              <TableCell className="text-center">
+                {totalOutOfStock.toFixed(2)}%
+              </TableCell>
+              <TableCell className="text-center border-r border-[#F1F1F1]">
+                {totalInventory}
+              </TableCell>
+              <TableCell className="text-center">
+                {(totalAverageRank / data.length).toFixed(1)}
+              </TableCell>
+              <TableCell className="text-center">{totalTraffic}</TableCell>
+              <TableCell className="text-center">{totalImpressions}</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
-}
+};
+
+export default SKUTable;

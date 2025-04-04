@@ -10,6 +10,8 @@ import zepto_icon from "@/assets/zepto_icon.png";
 import swiggy_icon from "@/assets/swiggy_icon.png";
 import { useState } from "react";
 import CityTable from "../custom/CityDataTable";
+import QuantityLineChart from "../custom/QuantityLineChart";
+import SalesLineChart from "../custom/SalesLineChart";
 
 interface SelectionSectionProps {
   setShowGraph: (value: boolean) => void;
@@ -74,8 +76,10 @@ const SelectionSection: React.FC<SelectionSectionProps> = ({
 const AnalyticsSection = () => {
   return (
     <div className="flex w-full gap-2 mb-8">
-      <CustomLineChart title={"Sales (MRP)"} />
-      <CustomLineChart title={"Total Quantity Sold"} />
+      {/* <CustomLineChart title={"Sales (MRP)"} /> */}
+      <SalesLineChart title={"Sales (MRP)"} />
+      <QuantityLineChart title={"Total Quantity Sold"} />
+      {/* <CustomLineChart title={"Total Quantity Sold"} /> */}
       <CityStats />
     </div>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,54 +10,115 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ChartLine, ChevronDown } from "lucide-react";
+import { executeQuery } from "@/fetchUtil";
+import refConfig from "@/assets/req.json";
 
-export interface CityData {
-  cityName: string;
-  sales: string;
-  percentage: string;
-  change: string;
-  subRows?: CityData[];
+interface CityApiItem {
+  "blinkit_insights_city.name": string;
+  "blinkit_insights_city.sales_mrp_sum": string;
 }
 
-const cityData: CityData[] = [
-  {
-    cityName: "Mumbai",
-    sales: "₹0.9L",
-    percentage: "0.9%",
-    change: "+22.8%",
-    subRows: [
-      {
-        cityName: "Mumbai Sub Region",
-        sales: "₹0.4L",
-        percentage: "0.4%",
-        change: "+11.2%",
-      },
-    ],
-  },
-  {
-    cityName: "Bengaluru",
-    sales: "₹0.8L",
-    percentage: "0.8%",
-    change: "-11.7%",
-  },
-  {
-    cityName: "Delhi",
-    sales: "₹0.5L",
-    percentage: "0.5%",
-    change: "+12.5%",
-  },
-];
+interface CityRow {
+  id: string;
+  name: string;
+  sales: string;
+  percentShare: string;
+  monthOverMonthChange: number;
+}
 
-const totals = {
-  totalSales: "₹2.2L",
-  totalPercentage: "2.2%",
-  totalChange: "+23.6%",
-};
+interface Totals {
+  overallSales: string;
+  overallPercentage: string;
+  overallChange: number;
+}
 
-const CityTable: React.FC = () => {
+const CityTable = () => {
+  const [cityRows, setCityRows] = useState<CityRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totals, setTotals] = useState<Totals>({
+    overallSales: "",
+    overallPercentage: "",
+    overallChange: 0,
+  });
+
+  const loadCityData = async () => {
+    try {
+      setLoading(true);
+      const configCard = refConfig.cards.find(
+        (card: any) => card.id === "blinkit-insights-city"
+      );
+
+      if (!configCard || !configCard.query) {
+        console.error("Missing configuration for the city insights.");
+        return;
+      }
+
+      const queryConfig = JSON.parse(configCard.query);
+      const [currentMonth, previousMonth] = await executeQuery(queryConfig);
+
+      const currentData: CityApiItem[] = currentMonth.data;
+      const previousData: CityApiItem[] = previousMonth.data;
+
+      const overallSalesValue = currentData.reduce(
+        (acc, item) =>
+          acc + Number(item["blinkit_insights_city.sales_mrp_sum"]),
+        0
+      );
+
+      const rows = currentData.map((item, idx) => {
+        const currentSales = Number(
+          item["blinkit_insights_city.sales_mrp_sum"]
+        );
+        const percentShare = ((currentSales / overallSalesValue) * 100).toFixed(
+          1
+        );
+        const matchingPrev = previousData.find(
+          (prev) =>
+            prev["blinkit_insights_city.name"] ===
+            item["blinkit_insights_city.name"]
+        );
+        const prevSales = matchingPrev
+          ? Number(matchingPrev["blinkit_insights_city.sales_mrp_sum"])
+          : 0;
+
+        const changeValue = prevSales
+          ? ((currentSales - prevSales) / prevSales) * 100
+          : 0;
+
+        return {
+          id: idx.toString(),
+          name: item["blinkit_insights_city.name"],
+          sales: `₹${(currentSales / 100000).toFixed(1)}L`,
+          percentShare: `${Number(percentShare).toFixed(1)}%`,
+          monthOverMonthChange: parseFloat(changeValue.toFixed(1)),
+        };
+      });
+
+      const aggregatedChange = rows.reduce(
+        (sum, city) => sum + (city.monthOverMonthChange || 0),
+        0
+      );
+
+      setTotals({
+        overallSales: `₹${(overallSalesValue / 100000).toFixed(1)}L`,
+        overallPercentage: "100%",
+        overallChange: parseFloat(aggregatedChange.toFixed(1)),
+      });
+
+      setCityRows(rows);
+    } catch (err) {
+      console.error("Failed to load city data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCityData();
+  }, []);
+
   return (
     <div className="mt-[40px]">
-      {/* Header Section */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-[20px] leading-6 font-bold text-[#031B15]">
@@ -69,18 +130,16 @@ const CityTable: React.FC = () => {
         </div>
         <Button
           variant="outline"
-          className="flex w-[109px] h-[40px] items-center gap-2 bg-[#027056] text-white rounded-[10px] text-sm font-medium"
+          className="flex w-[109px] h-[40px] items-center gap-2 bg-[#027056] text-white rounded-[10px] text-sm font-medium hover:bg-[#027056] hover:text-white"
         >
           Filters(1) <ChevronDown size={25} />
         </Button>
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-lg border border-gray-200 w-full">
+      <div className="bg-white rounded-lg border border-gray-200 w-full shadow-[0px_1px_0px_0px_rgba(0,0,0,0.12)]">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              {/* First header row */}
               <TableRow>
                 <TableHead
                   rowSpan={2}
@@ -98,18 +157,18 @@ const CityTable: React.FC = () => {
                   Sales Metrics
                 </TableHead>
               </TableRow>
-
-              {/* Second header row with sub-columns */}
               <TableRow>
                 <TableHead>
-                  <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">Sales</p>
+                  <div className="flex justify-center  items-center gap-1">
+                    <p className="text-[15px] font-semibold text-[#013025] leading-4">
+                      Sales
+                    </p>
                     <ChevronDown size={14} className="text-[#031B15]" />
                   </div>
                 </TableHead>
                 <TableHead>
                   <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
+                    <p className="text-[15px] text-[#013025] font-semibold leading-4">
                       Percentage
                     </p>
                     <ChevronDown size={14} className="text-[#031B15]" />
@@ -117,7 +176,7 @@ const CityTable: React.FC = () => {
                 </TableHead>
                 <TableHead>
                   <div className="flex justify-center items-center gap-1">
-                    <p className="text-[15px] font-semibold leading-4">
+                    <p className="text-[15px] text-[#013025] font-semibold leading-4">
                       Change
                     </p>
                     <ChevronDown size={14} className="text-[#031B15]" />
@@ -127,55 +186,38 @@ const CityTable: React.FC = () => {
             </TableHeader>
 
             <TableBody>
-              {cityData.map((city, index) => (
-                <React.Fragment key={index}>
-                  {/* Main City Row */}
-                  <TableRow>
-                    <TableCell className="border-r border-[#F1F1F1]">
-                      <div className="flex items-center gap-2">
-                        <Checkbox defaultChecked />
-                        {city.cityName}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">{city.sales}</TableCell>
-                    <TableCell className="text-center">
-                      {city.percentage}
-                    </TableCell>
-                    <TableCell className="text-center">{city.change}</TableCell>
-                  </TableRow>
-
-                  {/* Sub Rows if available */}
-                  {city.subRows &&
-                    city.subRows.map((subRow, subIndex) => (
-                      <TableRow key={subIndex} className="bg-gray-50">
-                        <TableCell className="pl-8 border-r border-[#F1F1F1]">
-                          {subRow.cityName}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.sales}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.percentage}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {subRow.change}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </React.Fragment>
+              {cityRows.slice(0, 4).map((city) => (
+                <TableRow key={city.id}>
+                  <TableCell className="border-r border-[#F1F1F1]">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        defaultChecked
+                        className="data-[state=checked]:bg-[#027056] data-[state=checked]:border-[#027056]"
+                      />
+                      {city.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {city.sales}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {city.percentShare}
+                  </TableCell>
+                  <TableCell className="text-center text-[#4E5E5A] text-sm font-medium">
+                    {city.monthOverMonthChange}
+                  </TableCell>
+                </TableRow>
               ))}
-
-              {/* Totals Row */}
-              <TableRow className="font-semibold bg-gray-100">
+              <TableRow className="font-semibold bg-[#FFFFFF">
                 <TableCell>Total</TableCell>
                 <TableCell className="text-center">
-                  {totals.totalSales}
+                  {totals.overallSales}
                 </TableCell>
                 <TableCell className="text-center">
-                  {totals.totalPercentage}
+                  {totals.overallPercentage}
                 </TableCell>
                 <TableCell className="text-center">
-                  {totals.totalChange}
+                  {totals.overallChange}
                 </TableCell>
               </TableRow>
             </TableBody>
