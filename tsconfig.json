@@ -10,6 +10,9 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+    "strict": false,
+    "skipLibCheck": true,
+    "noEmit": false,
     "paths": {
       "@/*": ["./src/*"]
     }
